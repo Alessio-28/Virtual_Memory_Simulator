@@ -3,10 +3,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-uint32_t virt_mem_size_bit = VIRT_MEM_SIZE_BIT;
-uint32_t phys_mem_size_bit = PHYS_MEM_SIZE_BIT;
-uint32_t page_size_bit = PAGE_SIZE_BIT;
-
 void MMU_init(MMU* mmu, char* phys_mem){
     assert(mmu && "MMU poiter must not be NULL");
     assert(phys_mem && "Physical memory poiter must not be NULL");
@@ -98,7 +94,7 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr){
     }
     else{
         Swap_in(SWAP_FILE, mmu->mem_ptr, (uint32_t)free_frame, page_index_in);
-        addPage(mmu, page_index_in, (uint32_t)free_frame);
+        addPage(mmu, page_index_in, free_frame);
     }
 }
 
