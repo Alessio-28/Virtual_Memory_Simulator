@@ -42,6 +42,26 @@ void Swap_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_
     strncpy(phys_mem+(frame_index*PAGE_SIZE), buf, PAGE_SIZE);
 }
 
+void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index){
+    assert(swap_file_name && "Swap_file_name must not be NULL");
+    FILE* f = fopen(swap_file_name, "r+");
+    assert(f && "Swap file open failed");
+
+    char buf[PAGE_SIZE+1];
+    fseek(f, page_index*PAGE_SIZE, SEEK_SET);
+
+    strncpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
+
+    int res_out = fprintf(f, "%s", buf);
+    
+    fclose(f);
+    
+    if(res_out < 0){
+        printf("Swap out failed");
+        exit(EXIT_FAILURE);
+    }
+}
+
 void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index_out, uint32_t page_index_in){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     FILE* f = fopen(swap_file_name, "r+");

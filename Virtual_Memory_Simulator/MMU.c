@@ -24,7 +24,7 @@ void MMU_init(MMU* mmu, char* phys_mem){
 
     mmu->free_list.list = (int*)(phys_mem + mmu->pt_len);
 
-    ArrayList_init(&(mmu->free_list), pages_for_data_structures, FRAMES, FRAMES);
+    ArrayList_init(&(mmu->free_list), pages_for_data_structures, FRAMES-1, FRAMES);
 
     Swap_init(SWAP_FILE);
 }
@@ -86,10 +86,16 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr){
     int free_frame = getElement(&(mmu->free_list));
 
     if(free_frame == -1){
-        uint32_t page_index_out = SecondChance(mmu);
+        uint32_t page_index_out;
+        uint8_t class = SecondChance(mmu, &page_index_out);
         uint32_t frame_index = mmu->pt[page_index_out].frame_index;
+        // Swap_out_and_in(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_out, page_index_in);
 
-        Swap_out_and_in(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_in, page_index_out);
+        if(class == 1)
+            Swap_out(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_out);
+
+        Swap_in(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_in);
+        removePage(mmu, page_index_out);
         addPage(mmu, page_index_in, frame_index);
     }
     else{
@@ -98,16 +104,17 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr){
     }
 }
 
-uint32_t SecondChance(MMU* mmu){
+uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
     PageTable pt = mmu->pt;
 
     while(1){
         // Return first page found that is not read and not written
         for(uint32_t i = mmu->cricular_list_index; i < PAGES; ++i){
             if(pt[i].valid && !(pt[i].unswappable) && !(pt[i].read) && !(pt[i].write)){
-                // Update circular list index to the next element int the list
+                // Update circular list index to the next element in the list
                 mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
-                return i;
+                *page_index = i;
+                return 0;
             }
         }
 
@@ -116,9 +123,10 @@ uint32_t SecondChance(MMU* mmu){
         for(uint32_t i = 0; i < PAGES; ++i){
             if(pt[i].valid && !(pt[i].unswappable)){
                 if(!(pt[i].read) && pt[i].write){
-                    // Update circular list index to the next element int the list
+                    // Update circular list index to the next element in the list
                     mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
-                    return i;
+                    *page_index = i;
+                    return 1;
                 }
                 pt[i].read = 0;
             }
@@ -136,7 +144,7 @@ void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index){
     mmu->pt[page_index].write = 0;
 }
 
-void deletePage(MMU* mmu, uint32_t page_index){
+void removePage(MMU* mmu, uint32_t page_index){
     mmu->pt[page_index].frame_index = 0;
     mmu->pt[page_index].unswappable = 0;
     mmu->pt[page_index].valid = 0;
