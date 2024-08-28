@@ -1,19 +1,23 @@
 CC = gcc
 CFLAGS = -Wall
 
-OBJS = 
-HEADERS = 
-BINS = 
+SRC = MMU.c swap.c array_list.c VMSS_test.c
+OBJS = MMU.o swap.o array_list.o VMSS_test.o
+HEADERS = VMSS_constants.h MMU.h swap.h array_list.h
+BINS = VMSS_test
 
 .phony: all clean
 
 all: $(BINS)
 
-%: %.o
-	$(CC) -o $@ $<
+%.o: %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-%.o: %.c
-	$(CC) -c $<
+VMSS_test: $(SRC) $(HEADRES)
+	$(CC) $(CFLAGS) -o $@ $(SRC)
 
 clean:
-	rm -rf *.o $(BINS)
+	rm -rf $(OBJS) $(BINS) swap.txt
+
+clean_s:
+	rm -rf swap.txt
