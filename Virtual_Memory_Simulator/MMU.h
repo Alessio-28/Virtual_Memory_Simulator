@@ -24,6 +24,7 @@ typedef struct MMU{
     char* mem_ptr;
     // Pointer to Page table, stored in main memory
     PageTable pt;
+    uint32_t cricular_list_index;
     // Length of the page table
     uint32_t pt_len;
     
@@ -43,6 +44,12 @@ void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c);
 char* MMU_readByte(MMU* mmu, uint32_t virt_addr);
 
 void MMU_exception(MMU* mmu, uint32_t virt_addr);
+
+uint32_t SecondChance(MMU* mmu);
+
+void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index);
+
+void deletePage(MMU* mmu, uint32_t page_index);
 
 // Get page index from virtual address
 uint32_t getPageIndex(uint32_t virt_addr);

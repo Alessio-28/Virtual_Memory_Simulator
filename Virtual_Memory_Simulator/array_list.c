@@ -1,5 +1,3 @@
-#pragma once
-
 #include "array_list.h"
 #include <assert.h>
 #include <stdio.h>

@@ -1,15 +1,18 @@
-#pragma once
-
 #include "MMU.h"
 #include "swap.h"
 #include <stdio.h>
 #include <assert.h>
+
+uint32_t virt_mem_size_bit = VIRT_MEM_SIZE_BIT;
+uint32_t phys_mem_size_bit = PHYS_MEM_SIZE_BIT;
+uint32_t page_size_bit = PAGE_SIZE_BIT;
 
 void MMU_init(MMU* mmu, char* phys_mem){
     assert(mmu && "MMU poiter must not be NULL");
     assert(phys_mem && "Physical memory poiter must not be NULL");
 
     mmu->mem_ptr = phys_mem;
+    mmu->cricular_list_index = 0;
 
     PageTable_init(mmu, phys_mem);
 
@@ -47,7 +50,7 @@ void PageTable_init(MMU* mmu, char* phys_mem){
 
 
 void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
-    AddressingResult res = AddressIsValid(mmu->pt, virt_addr);
+    AddressingResult res = AddressIsValid(mmu, virt_addr);
 
     if(res == Invalid){
         printf("Address not valid\n");
@@ -59,13 +62,13 @@ void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
 
     uint32_t page_index = getPageIndex(virt_addr);
     mmu->pt[page_index].write = 1;
-    uint32_t phys_addr = getPhysicalAddress(mmu->pt, virt_addr);
+    uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
 
     mmu->mem_ptr[phys_addr] = c;
 }
 
 char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
-    AddressingResult res = AddressIsValid(mmu->pt, virt_addr);
+    AddressingResult res = AddressIsValid(mmu, virt_addr);
 
     if(res == Invalid){
         printf("Address not valid\n");
@@ -77,12 +80,73 @@ char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
 
     uint32_t page_index = getPageIndex(virt_addr);
     mmu->pt[page_index].read = 1;
-    uint32_t phys_addr = getPhysicalAddress(mmu->pt, virt_addr);
+    uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
 
     return &(mmu->mem_ptr[phys_addr]);
 }
 
-void MMU_exception(MMU* mmu, uint32_t virt_addr);
+void MMU_exception(MMU* mmu, uint32_t virt_addr){
+    uint32_t page_index_in = getPageIndex(virt_addr);
+    int free_frame = getElement(&(mmu->free_list));
+
+    if(free_frame == -1){
+        uint32_t page_index_out = SecondChance(mmu);
+        uint32_t frame_index = mmu->pt[page_index_out].frame_index;
+
+        Swap_out_and_in(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_in, page_index_out);
+        addPage(mmu, page_index_in, frame_index);
+    }
+    else{
+        Swap_in(SWAP_FILE, mmu->mem_ptr, (uint32_t)free_frame, page_index_in);
+        addPage(mmu, page_index_in, (uint32_t)free_frame);
+    }
+}
+
+uint32_t SecondChance(MMU* mmu){
+    PageTable pt = mmu->pt;
+
+    while(1){
+        // Return first page found that is not read and not written
+        for(uint32_t i = mmu->cricular_list_index; i < PAGES; ++i){
+            if(pt[i].valid && !(pt[i].unswappable) && !(pt[i].read) && !(pt[i].write)){
+                // Update circular list index to the next element int the list
+                mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
+                return i;
+            }
+        }
+
+        // Return first page found that is not read but written
+        // Set read bit to 0
+        for(uint32_t i = 0; i < PAGES; ++i){
+            if(pt[i].valid && !(pt[i].unswappable)){
+                if(!(pt[i].read) && pt[i].write){
+                    // Update circular list index to the next element int the list
+                    mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
+                    return i;
+                }
+                pt[i].read = 0;
+            }
+        }
+
+        mmu->cricular_list_index = 0;
+    }
+}
+
+void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index){
+    mmu->pt[page_index].frame_index = frame_index;
+    mmu->pt[page_index].unswappable = 0;
+    mmu->pt[page_index].valid = 1;
+    mmu->pt[page_index].read = 0;
+    mmu->pt[page_index].write = 0;
+}
+
+void deletePage(MMU* mmu, uint32_t page_index){
+    mmu->pt[page_index].frame_index = 0;
+    mmu->pt[page_index].unswappable = 0;
+    mmu->pt[page_index].valid = 0;
+    mmu->pt[page_index].read = 0;
+    mmu->pt[page_index].write = 0;
+}
 
 uint32_t getPageIndex(uint32_t virt_addr){ return virt_addr >> PAGE_OFFSET_SIZE; }
 
