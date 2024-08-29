@@ -49,12 +49,16 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr);
 // Set page_index to the index of the chosen page
 // Return the class of the page
 // Return 0 if the page has not been read and not been written
-// Return -1 if the page has not been read but has been written
+// Return 1 if the page has not been read but has been written
 uint8_t SecondChance(MMU* mmu, uint32_t* page_index);
 
 void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index);
 
 void removePage(MMU* mmu, uint32_t page_index);
+
+// Translate virtual address to physical address.
+// Assume virt_addr is a valid address
+uint32_t getPhysicalAddress(MMU* mmu, uint32_t virt_addr);
 
 // Get page index from virtual address
 uint32_t getPageIndex(uint32_t virt_addr);
@@ -65,8 +69,7 @@ uint32_t getFrameIndex(uint32_t phys_addr);
 // Get page offset from either virtual or physical address
 uint32_t getOffset(uint32_t addr);
 
-// Translate virtual address to physical address.
-// Assume virt_addr is a valid address
-uint32_t getPhysicalAddress(MMU* mmu, uint32_t virt_addr);
-
 AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr);
+
+void PrintMMU(MMU mmu);
+void PrintPageTable(MMU mmu);

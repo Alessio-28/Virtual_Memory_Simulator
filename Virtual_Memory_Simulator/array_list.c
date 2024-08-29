@@ -3,25 +3,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ArrayList_init(ArrayList* array_list, int first, int last, int size){
+void ArrayList_init(ArrayList* array_list, int size){
     assert(array_list->list && "Array list pointer must not be NULL");
-    assert((first <= last) && "Array list: first must be less than last");
-    assert((last < size) && "Array list: last must be less than size");
 
-    array_list->start = first;
+    array_list->start = 0;
+    array_list->size = size;
+    array_list->max_size = size;
 
-    int i = 0;
-    for(; i < first; ++i)
-        array_list->list[i] = -1;
-
-    for(i = first; i < last; ++i)
+    for(int i = 0; i < size-1; ++i)
         array_list->list[i] = i+1;
 
-    for(i = last; i < size; ++i)
-        array_list->list[i] = -1;
-
-    array_list->size = last - first + 1;    
-    array_list->max_size = size;
+    array_list->list[size-1] = -1;
+    
 }
 
 void EmptyArrayList_init(ArrayList* array_list, int size){
@@ -48,28 +41,21 @@ int getElement(ArrayList* array_list){
 
 void addElement(ArrayList* array_list, int elem){
     assert((elem >= 0) && "Array list: element must be non negative");
-
-    if(array_list->size == array_list->max_size){
-        printf("Array list full\n");
-        exit(EXIT_FAILURE);
-    }
-
-    if(array_list->list[elem] != -1){
-        printf("Array list: element already in the list\n");
-        exit(EXIT_FAILURE);
-    }
+    assert((elem < array_list->max_size) && "Array list: element must be less than max size");
+    assert((array_list->size < array_list->max_size) && "Array list full");
+    assert((array_list->list[elem] == -1) && "Array list: element already in the list");
 
     array_list->list[elem] = array_list->start;
     array_list->start = elem;
     (array_list->size)++;
 }
 
-void PrintArrayList(ArrayList* array_list){
-    printf("Array list start: %d\n", array_list->start);
+void PrintArrayList(ArrayList array_list){
+    printf("Array list start: %d\n", array_list.start);
     printf("Array list:");
-    for(int i = 0; i < array_list->max_size; ++i)
-        printf(" %d", array_list->list[i]);
+    for(int i = 0; i < array_list.max_size; ++i)
+        printf(" %d", array_list.list[i]);
     printf("\n");
-    printf("Array list size: %d\n", array_list->size);
-    printf("Array list max size: %d\n", array_list->max_size);
+    printf("Array list size: %d\n", array_list.size);
+    printf("Array list max size: %d\n", array_list.max_size);
 }

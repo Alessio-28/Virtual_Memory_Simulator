@@ -2,6 +2,12 @@
 
 #include <stdint.h>
 
+/* Default Values
+ * VIRT_MEM_SIZE_BIT 24
+ * PHYS_MEM_SIZE_BIT 20
+ * PAGE_SIZE_BIT     12
+*/
+
 #define VIRT_MEM_SIZE_BIT 24
 #define PHYS_MEM_SIZE_BIT 20
 #define PAGE_SIZE_BIT     12
@@ -17,7 +23,7 @@
 #define FRAMES ((uint32_t)(1 << FRAME_INDEX_SIZE))
 
 #define PAGE_OFFSET_SIZE      PAGE_SIZE_BIT
-#define LOGICAL_ADDRESS_SIZE  VIRT_MEM_SIZE_BIT
+#define VIRTUAL_ADDRESS_SIZE  VIRT_MEM_SIZE_BIT
 #define PHYSICAL_ADDRESS_SIZE PHYS_MEM_SIZE_BIT
 
 #define SWAP_FILE "swap.txt"
