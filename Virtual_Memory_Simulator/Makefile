@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -D_TEST_
 
 SRC = MMU.c swap.c array_list.c VMSS_test.c
 OBJS = MMU.o swap.o array_list.o VMSS_test.o

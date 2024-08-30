@@ -30,7 +30,7 @@ typedef struct MMU{
     
     // List of free frames
     // list and start elements are stored in MMU
-    // Array pointed by list is stored in main memory, below the page table
+    // Array pointed by list is stored in main memory, after the page table
     ArrayList free_list;
 } MMU;
 

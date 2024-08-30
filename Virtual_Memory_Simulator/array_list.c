@@ -51,11 +51,11 @@ void addElement(ArrayList* array_list, int elem){
 }
 
 void PrintArrayList(ArrayList array_list){
-    printf("Array list start: %d\n", array_list.start);
+    printf("Array list max size _ %d\n", array_list.max_size);
+    printf("Array list size _____ %d\n", array_list.size);
+    printf("Array list start ____ %d\n", array_list.start);
     printf("Array list:");
     for(int i = 0; i < array_list.max_size; ++i)
         printf(" %d", array_list.list[i]);
     printf("\n");
-    printf("Array list size: %d\n", array_list.size);
-    printf("Array list max size: %d\n", array_list.max_size);
 }

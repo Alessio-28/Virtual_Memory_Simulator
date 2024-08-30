@@ -58,6 +58,7 @@ void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32
     char buf[PAGE_SIZE+1];
     fseek(f, page_index*PAGE_SIZE, SEEK_SET);
     strncpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
+    buf[PAGE_SIZE] = '\0';
 
     int res_out = fprintf(f, "%s", buf);
     
@@ -74,29 +75,9 @@ void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index,
     assert(phys_mem && "Physical memory pointer must not be NULL");
     assert((frame_index < FRAMES) && "Frame index must be less than FRAMES");
     assert((page_index_out < PAGES && page_index_in < PAGES) && "Page index must be less than PAGES");
-    FILE* f = fopen(swap_file_name, "r+");
-    assert(f && "Swap file open failed");
 
-    char buf[PAGE_SIZE+1];
-    fseek(f, page_index_out*PAGE_SIZE, SEEK_SET);
-
-    strncpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
-
-    int res_out = fprintf(f, "%s", buf);
-    if(res_out < 0){
-        fclose(f);
-        printf("Swap out failed");
-        exit(EXIT_FAILURE);
-    }
-
-    fseek(f, page_index_in*PAGE_SIZE, SEEK_SET);
-    char* res_in = fgets(buf, PAGE_SIZE+1, f);
-    
-    fclose(f);
-
-    assert(res_in && "Swap in failed");
-
-    strncpy(phys_mem+(frame_index*PAGE_SIZE), buf, PAGE_SIZE);
+    Swap_out(swap_file_name, phys_mem, frame_index, page_index_out);
+    Swap_in(swap_file_name, phys_mem, frame_index, page_index_in);
 }
 
 void PrintSwap(char* swap_file_name){
