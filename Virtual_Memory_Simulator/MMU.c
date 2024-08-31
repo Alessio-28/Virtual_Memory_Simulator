@@ -69,7 +69,7 @@ void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
     mmu->mem_ptr[phys_addr] = c;
 
 #ifdef _TEST_
-    printf("Character written on page %u on frame %u\n", page_index, getFrameIndex(phys_addr));
+    printf("Character written on page 0x%x on frame 0x%x\n", page_index, getFrameIndex(phys_addr));
 #endif
 }
 
@@ -90,7 +90,7 @@ char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
     uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
 
 #ifdef _TEST_
-    printf("Character read from page %u on frame %u\n", page_index, getFrameIndex(phys_addr));
+    printf("Character read from page 0x%x on frame 0x%x\n", page_index, getFrameIndex(phys_addr));
 #endif
 
     return &(mmu->mem_ptr[phys_addr]);
@@ -99,7 +99,9 @@ char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
 void MMU_exception(MMU* mmu, uint32_t virt_addr){
     uint32_t page_index_in = getPageIndex(virt_addr);
     int free_frame = getElement(&(mmu->free_list));
-
+#ifdef _TEST_
+    printf("--PAGE FAULT--\n");
+#endif
     if(free_frame == -1){
         uint32_t page_index_out;
         uint8_t class = SecondChance(mmu, &page_index_out);
@@ -109,7 +111,7 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr){
         if(class == 1){
             Swap_out(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_out);
 #ifdef _TEST_
-            printf("Page %u swaped out from frame %u\n", page_index_out, frame_index);
+            printf("Page 0x%x swapped out from frame 0x%x\n", page_index_out, frame_index);
 #endif
         }
 
@@ -117,24 +119,33 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr){
         removePage(mmu, page_index_out);
         addPage(mmu, page_index_in, frame_index);
 #ifdef _TEST_
-        printf("Page %u swaped in on frame %u\n", page_index_in, frame_index);
+        if(class == 1)
+            printf("Page 0x%x swapped in on frame 0x%x\n", page_index_in, frame_index);
+        else
+            printf("Page 0x%x swapped in on frame 0x%x in place of page 0x%x\n", page_index_in, frame_index, page_index_out);
 #endif
     }
     else{
         Swap_in(SWAP_FILE, mmu->mem_ptr, (uint32_t)free_frame, page_index_in);
         addPage(mmu, page_index_in, free_frame);
 #ifdef _TEST_
-        printf("Page %u swaped in on frame %u\n", page_index_in, (uint32_t)free_frame);
+        printf("Page 0x%x swapped in on frame 0x%x\n", page_index_in, (uint32_t)free_frame);
 #endif
     }
 }
 
 uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
     PageTable pt = mmu->pt;
+    uint32_t CLI = mmu->cricular_list_index;
 
+    uint32_t i;
+    uint32_t j;
     while(1){
+
         // Return first page found that is not read and not written
-        for(uint32_t i = mmu->cricular_list_index; i < PAGES; ++i){
+        for(i = 0, j = CLI; i < PAGES; ++i, ++j){
+            if(j == PAGES) j = 0;
+
             if(pt[i].valid && !(pt[i].unswappable) && !(pt[i].read) && !(pt[i].write)){
                 // Update circular list index to the next element in the list
                 mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
@@ -145,7 +156,9 @@ uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
 
         // Return first page found that is not read but written
         // Set read bit to 0
-        for(uint32_t i = 0; i < PAGES; ++i){
+        for(i = 0, j = CLI; i < PAGES; ++i, ++j){
+            if(j == PAGES) j = 0;
+
             if(pt[i].valid && !(pt[i].unswappable)){
                 if(!(pt[i].read) && pt[i].write){
                     // Update circular list index to the next element in the list
@@ -156,8 +169,6 @@ uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
                 pt[i].read = 0;
             }
         }
-
-        mmu->cricular_list_index = 0;
     }
 }
 
@@ -213,17 +224,17 @@ void PrintMMU(MMU mmu){
     // Page table address relative to phys_mem
     printf("MMU data\n");
     printf("______________________________\n");
-    printf("Page table address ________ %ld\n", (((void*)mmu.pt) - ((void*)mmu.mem_ptr)));
+    printf("Page table address ________ 0x%lx\n", (((void*)mmu.pt) - ((void*)mmu.mem_ptr)));
     printf("Page table length _________ %u\n", mmu.pt_len);
     printf("Pages for data structures _ %u\n", pages_for_data_structures);
     printf("Circular list index _______ %u\n", mmu.cricular_list_index);
     // Free list address relative to phys_mem
-    printf("Free list address _________ %ld\n", (((void*)mmu.free_list.list) - ((void*)mmu.mem_ptr)));
+    printf("Free list address _________ 0x%lx\n", (((void*)mmu.free_list.list) - ((void*)mmu.mem_ptr)));
     printf("Free frames _______________ %d\n", mmu.free_list.size);
-    printf("\nFree frames index: %d", mmu.free_list.start);
+    printf("\nFree frames index: 0x%x", mmu.free_list.start);
     for(uint32_t i = 0; i < mmu.free_list.max_size; ++i){
         if(mmu.free_list.list[i] != -1)
-            printf(" | %d", mmu.free_list.list[i]);
+            printf(" | 0x%x", mmu.free_list.list[i]);
     }
     printf("\n");
     // PrintArrayList(mmu.free_list);
@@ -232,11 +243,11 @@ void PrintMMU(MMU mmu){
 
 void PrintPageTable(MMU mmu){
     printf("Page table content\n");
-    printf("______________________________\n");
-    printf("Page | Frame | V | U | R | W\n");
+    printf("__________________________________\n");
+    printf("  Page |   Frame | V | U | R | W\n");
     for(uint32_t i = 0; i < PAGES; ++i){
         int frame_index = mmu.pt[i].valid ? mmu.pt[i].frame_index : -1;
-        printf("%4u |  %4d | %1u | %1u | %1u | %1u\n", i, frame_index, mmu.pt[i].valid, mmu.pt[i].unswappable, mmu.pt[i].read, mmu.pt[i].write);
+        printf("0x%4x |  0x%4x | %1u | %1u | %1u | %1u\n", i, frame_index, mmu.pt[i].valid, mmu.pt[i].unswappable, mmu.pt[i].read, mmu.pt[i].write);
     }
-    printf("______________________________\n\n");
+    printf("__________________________________\n\n");
 }

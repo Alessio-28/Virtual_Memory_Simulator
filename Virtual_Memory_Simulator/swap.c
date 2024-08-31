@@ -89,7 +89,7 @@ void PrintSwap(char* swap_file_name){
     char buf[buf_len];
     printf("Swap file data\n_________________________\n");
     for(uint32_t i = 0; i < PAGES && fgets(buf, buf_len, f) != NULL; ++i)
-        printf("Page index %4u - %s\n", i, buf);
+        printf("Page index 0x%04x - %s\n", i, buf);
     printf("_________________________\n\n");
 
     if(ferror(f)){
