@@ -71,5 +71,11 @@ uint32_t getOffset(uint32_t addr);
 
 AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr);
 
+
+
 void PrintMMU(MMU mmu);
 void PrintPageTable(MMU mmu);
+// Printf pages in physical memory with their info and data
+void PrintPhysicalMemory(MMU mmu);
+// Printf pages in physical memory with their info
+void PrintWorkingSet(MMU mmu);

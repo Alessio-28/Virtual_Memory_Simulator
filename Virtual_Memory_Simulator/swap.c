@@ -44,7 +44,7 @@ void Swap_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_
 
     assert(ret && "Swap in failed");
 
-    strncpy(phys_mem+(frame_index*PAGE_SIZE), buf, PAGE_SIZE);
+    memcpy(phys_mem+(frame_index*PAGE_SIZE), buf, PAGE_SIZE);
 }
 
 void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index){
@@ -57,7 +57,7 @@ void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32
 
     char buf[PAGE_SIZE+1];
     fseek(f, page_index*PAGE_SIZE, SEEK_SET);
-    strncpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
+    memcpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
     buf[PAGE_SIZE] = '\0';
 
     int res_out = fprintf(f, "%s", buf);
@@ -80,15 +80,18 @@ void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index,
     Swap_in(swap_file_name, phys_mem, frame_index, page_index_in);
 }
 
+//_______________________________________________________________________________________________________________________________
+//_______________________________________________________________________________________________________________________________
+//_______________________________________________________________________________________________________________________________
+
 void PrintSwap(char* swap_file_name){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     FILE* f = fopen(swap_file_name, "r");
     assert(f && "Swap file open failed");
 
-    uint32_t buf_len = PAGE_SIZE+1;
-    char buf[buf_len];
+    char buf[PAGE_SIZE+1];
     printf("Swap file data\n_________________________\n");
-    for(uint32_t i = 0; i < PAGES && fgets(buf, buf_len, f) != NULL; ++i)
+    for(uint32_t i = 0; i < PAGES && fgets(buf, PAGE_SIZE+1, f) != NULL; ++i)
         printf("Page index 0x%04x - %s\n", i, buf);
     printf("_________________________\n\n");
 
@@ -99,4 +102,24 @@ void PrintSwap(char* swap_file_name){
     }
     
     fclose(f);
+}
+
+void PrintPageInSwap(char* swap_file_name, uint32_t page_index){
+    assert(swap_file_name && "Swap_file_name must not be NULL");
+    assert((page_index < PAGES) && "page_index must be less than PAGES");
+    FILE* f = fopen(swap_file_name, "r");
+    assert(f && "Swap file open failed");
+
+    char buf[PAGE_SIZE+1];
+    fseek(f, page_index*PAGE_SIZE, SEEK_SET);
+    char* res = fgets(buf, PAGE_SIZE+1, f);
+
+    fclose(f);
+
+    if(res == NULL){
+        printf("PrintPageInSwap failed\n");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("Page index 0x%x - %s\n", page_index, buf);
 }

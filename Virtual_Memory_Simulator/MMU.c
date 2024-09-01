@@ -1,6 +1,7 @@
 #include "MMU.h"
 #include "swap.h"
 #include <stdio.h>
+#include "string.h"
 #include <assert.h>
 
 void MMU_init(MMU* mmu, char* phys_mem){
@@ -146,10 +147,10 @@ uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
         for(i = 0, j = CLI; i < PAGES; ++i, ++j){
             if(j == PAGES) j = 0;
 
-            if(pt[i].valid && !(pt[i].unswappable) && !(pt[i].read) && !(pt[i].write)){
+            if(pt[j].valid && !(pt[j].unswappable) && !(pt[j].read) && !(pt[j].write)){
                 // Update circular list index to the next element in the list
-                mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
-                *page_index = i;
+                mmu->cricular_list_index = j+1 == PAGES ? 0 : j+1;
+                *page_index = j;
                 return 0;
             }
         }
@@ -159,14 +160,14 @@ uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
         for(i = 0, j = CLI; i < PAGES; ++i, ++j){
             if(j == PAGES) j = 0;
 
-            if(pt[i].valid && !(pt[i].unswappable)){
-                if(!(pt[i].read) && pt[i].write){
+            if(pt[j].valid && !(pt[j].unswappable)){
+                if(!(pt[j].read) && pt[j].write){
                     // Update circular list index to the next element in the list
-                    mmu->cricular_list_index = i+1 == PAGES ? 0 : i+1;
-                    *page_index = i;
+                    mmu->cricular_list_index = j+1 == PAGES ? 0 : j+1;
+                    *page_index = j;
                     return 1;
                 }
-                pt[i].read = 0;
+                pt[j].read = 0;
             }
         }
     }
@@ -215,6 +216,10 @@ AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr){
     else return PageNotInMemory;
 }
 
+//_______________________________________________________________________________________________________________________________
+//_______________________________________________________________________________________________________________________________
+//_______________________________________________________________________________________________________________________________
+
 void PrintMMU(MMU mmu){
     uint32_t pages_for_data_structures = 1;
     uint32_t temp = (mmu.pt_len + (mmu.free_list.max_size * sizeof(int)));
@@ -225,18 +230,20 @@ void PrintMMU(MMU mmu){
     printf("MMU data\n");
     printf("______________________________\n");
     printf("Page table address ________ 0x%lx\n", (((void*)mmu.pt) - ((void*)mmu.mem_ptr)));
-    printf("Page table length _________ %u\n", mmu.pt_len);
+    printf("Page table length _________ %u bytes\n", mmu.pt_len);
     printf("Pages for data structures _ %u\n", pages_for_data_structures);
-    printf("Circular list index _______ %u\n", mmu.cricular_list_index);
+    printf("Circular list index _______ 0x%x\n", mmu.cricular_list_index);
     // Free list address relative to phys_mem
     printf("Free list address _________ 0x%lx\n", (((void*)mmu.free_list.list) - ((void*)mmu.mem_ptr)));
     printf("Free frames _______________ %d\n", mmu.free_list.size);
-    printf("\nFree frames index: 0x%x", mmu.free_list.start);
-    for(uint32_t i = 0; i < mmu.free_list.max_size; ++i){
-        if(mmu.free_list.list[i] != -1)
-            printf(" | 0x%x", mmu.free_list.list[i]);
+    if(mmu.free_list.start != -1){
+        printf("\nFree frames index: 0x%x", mmu.free_list.start);
+        for(uint32_t i = 0; i < mmu.free_list.max_size; ++i){
+            if(mmu.free_list.list[i] != -1)
+                printf(" | 0x%x", mmu.free_list.list[i]);
+        }
+        printf("\n");
     }
-    printf("\n");
     // PrintArrayList(mmu.free_list);
     printf("______________________________\n\n");
 }
@@ -248,6 +255,51 @@ void PrintPageTable(MMU mmu){
     for(uint32_t i = 0; i < PAGES; ++i){
         int frame_index = mmu.pt[i].valid ? mmu.pt[i].frame_index : -1;
         printf("0x%4x |  0x%4x | %1u | %1u | %1u | %1u\n", i, frame_index, mmu.pt[i].valid, mmu.pt[i].unswappable, mmu.pt[i].read, mmu.pt[i].write);
+    }
+    printf("__________________________________\n\n");
+}
+
+void PrintPhysicalMemory(MMU mmu){
+    printf("Physical memory data\n");
+    printf("_______________________________________\n");
+    printf("  Frame |   Page | V | U | R | W | Data\n");
+    for(uint32_t i = 0; i < FRAMES; ++i){
+        int page_index = 0;
+        for(; page_index < PAGES; ++page_index){
+            if(mmu.pt[page_index].frame_index == i)
+                break;
+        }
+        if(page_index != PAGES)
+            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u | ", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
+        else
+            printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 | ", i);
+        
+        char temp[PAGE_SIZE+1];
+        memcpy(temp, mmu.mem_ptr+(i*PAGE_SIZE), PAGE_SIZE);
+        temp[PAGE_SIZE] = '\0';
+        printf("%s\n", temp);
+
+        // for(uint32_t j = 0; j < PAGE_SIZE; ++j)
+        //     printf("%d ", phys_mem[i*PAGE_SIZE + j]);
+        // printf("\n");
+    }
+    printf("_______________________________________\n\n");
+}
+
+void PrintWorkingSet(MMU mmu){
+    printf("Physical memory data\n");
+    printf("__________________________________\n");
+    printf("  Frame |   Page | V | U | R | W |\n");
+    for(uint32_t i = 0; i < FRAMES; ++i){
+        int page_index = 0;
+        for(; page_index < PAGES; ++page_index){
+            if(mmu.pt[page_index].frame_index == i)
+                break;
+        }
+        if(page_index != PAGES)
+            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
+        else
+            printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 |\n", i);
     }
     printf("__________________________________\n\n");
 }

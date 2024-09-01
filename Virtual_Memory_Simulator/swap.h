@@ -17,3 +17,4 @@ void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32
 void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index_out, uint32_t page_index_in);
 
 void PrintSwap(char* swap_file_name);
+void PrintPageInSwap(char* swap_file_name, uint32_t page_index);

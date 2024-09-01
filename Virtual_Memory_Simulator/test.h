@@ -7,12 +7,10 @@
 void check_macros();
 void print_macros();
 void phys_mem_init(char* phys_mem);
-// Printf pages in physical memory with their info and data
-void print_phys_mem(MMU mmu, char* phys_mem);
-// Printf pages in physical memory with their info
-void print_working_set(MMU mmu, char* phys_mem);
 
-void read_from_page(MMU* mmu, int mem_limit);
-void write_on_page(MMU* mmu, int mem_limit);
+void print_swap();
 
-void random_read_write(MMU* mmu, int mem_limit);
+void read_from_page(MMU* mmu);
+void write_on_page(MMU* mmu);
+
+void random_read_write(MMU* mmu);

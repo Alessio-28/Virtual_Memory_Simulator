@@ -18,7 +18,6 @@ int main(int argc, char** argv){
     Swap_init(SWAP_FILE);
 
     char command[256];
-    uint32_t vms = VIRT_MEM_SIZE-1;
     while(command[0] != '0' && command[0] != 'Q' && command[0] != 'q'){
         printf("\n");
         printf("Enter:\n");
@@ -31,27 +30,28 @@ int main(int argc, char** argv){
         printf("7 - Print macros\n");
         printf("8 - Random read/write on pages\n");
         printf("0 | Q | q - Quit\n");
-        printf("Command: ");
-        scanf("%s", command);
+        do{
+            printf("Command: ");
+        }while(scanf("%s", command) != 1);
         printf("\n");
 
         if(strlen(command) > 1) command[0] = 0;
 
         switch(command[0]){
             case '1':
-                read_from_page(mmu_ptr, vms);
+                read_from_page(mmu_ptr);
                 break;
             case '2':
-                write_on_page(mmu_ptr, vms);
+                write_on_page(mmu_ptr);
                 break;
             case '3':
-                print_phys_mem(mmu, phys_mem);
+                PrintPhysicalMemory(mmu);
                 break;
             case '4':
-                print_working_set(mmu, phys_mem);
+                PrintWorkingSet(mmu);
                 break;
             case '5':
-                PrintSwap(SWAP_FILE);
+                print_swap();
                 break;
             case '6':
                 PrintMMU(mmu);
@@ -60,7 +60,7 @@ int main(int argc, char** argv){
                 print_macros();
                 break;
             case '8':
-                random_read_write(mmu_ptr, vms);
+                random_read_write(mmu_ptr);
                 break;
             case '0':
             case 'Q':

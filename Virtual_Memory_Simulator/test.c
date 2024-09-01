@@ -1,6 +1,7 @@
 #define _XOPEN_SOURCE 500
 
 #include "test.h"
+#include "swap.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,112 +57,91 @@ void print_macros(){
     printf("______________________________________\n\n");
 }
 
-void phys_mem_init(char* mem){ memset(mem, '0', PHYS_MEM_SIZE); }
+void phys_mem_init(char* phys_mem){ memset(phys_mem, '0', PHYS_MEM_SIZE); }
 
-void print_phys_mem(MMU mmu, char* mem){
-    printf("Physical memory data\n");
-    printf("_______________________________________\n");
-    printf("  Frame |   Page | V | U | R | W | Data\n");
-    for(uint32_t i = 0; i < FRAMES; ++i){
-        int page_index = 0;
-        for(; page_index < PAGES; ++page_index){
-            if(mmu.pt[page_index].frame_index == i)
-                break;
-        }
-        if(page_index != PAGES)
-            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u | ", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
-        else
-            printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 | ", i);
-        
-        char temp[PAGE_SIZE+1];
-        strncpy(temp, mem+(i*PAGE_SIZE), PAGE_SIZE);
-        temp[PAGE_SIZE] = '\0';
-        printf("%s\n", temp);
-
-        // for(uint32_t j = 0; j < PAGE_SIZE; ++j)
-        //     printf("%d ", mem[i*PAGE_SIZE + j]);
-        // printf("\n");
-    }
-    printf("_______________________________________\n\n");
-}
-
-void print_working_set(MMU mmu, char * mem){
-    printf("Physical memory data\n");
-    printf("__________________________________\n");
-    printf("  Frame |   Page | V | U | R | W |\n");
-    for(uint32_t i = 0; i < FRAMES; ++i){
-        int page_index = 0;
-        for(; page_index < PAGES; ++page_index){
-            if(mmu.pt[page_index].frame_index == i)
-                break;
-        }
-        if(page_index != PAGES)
-            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
-        else
-            printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 |\n", i);
-    }
-    printf("__________________________________\n\n");
-}
-
-void read_from_page(MMU* mmu, int mem_limit){
+void print_swap(){
     char input[256];
-    int virt_addr = -1;
+    
+    do{
+        printf("Print all swap file content?[y/n]: ");
+        if(scanf("%s", input) != 1) continue;
+    }while(input[0] != 'y' && input[0] != 'n');
+
+    if(input[0] == 'y')
+        PrintSwap(SWAP_FILE);
+    else{
+        uint32_t page_index_limit = PAGES-1;
+        uint32_t page_index = PAGES;
+        do{
+            printf("Enter index of page to print (0x0 <= index <= 0x%x): ", page_index_limit);
+            if(scanf("%x", &page_index) != 1) continue;
+        }while(page_index > page_index_limit);
+        PrintPageInSwap(SWAP_FILE, page_index);
+    }
+}
+
+void read_from_page(MMU* mmu){
+    uint32_t mem_limit = VIRT_MEM_SIZE-1;
+    uint32_t virt_addr = VIRT_MEM_SIZE;
     char* read_byte;
     
     do{
         printf("Enter address from which to read (0x0 <= address <= 0x%x): ", mem_limit);
-        scanf("%s", input);
-        virt_addr = atoi(input);
-    }while(virt_addr < 0 || virt_addr > mem_limit);
+        if(scanf("%x", &virt_addr) != 1) continue;
+    }while(virt_addr > mem_limit);
 
-    read_byte = MMU_readByte(mmu, (uint32_t)virt_addr);
-    if(read_byte) printf("Character read: %c\n", read_byte[0]);
+    read_byte = MMU_readByte(mmu, virt_addr);
+    if(read_byte) printf("Character read: '%c'\n", read_byte[0]);
 }
 
-void write_on_page(MMU* mmu, int mem_limit){
-    char input[256];
-    int virt_addr = -1;
+void write_on_page(MMU* mmu){
+    uint32_t mem_limit = VIRT_MEM_SIZE-1;
+    uint32_t virt_addr = VIRT_MEM_SIZE;
     char write_byte[256];
-    
+
     do{
         printf("Enter address on which to write (0x0 <= address <= 0x%x): ", mem_limit);
-        scanf("%s", input);
-        virt_addr = atoi(input);
-    }while(virt_addr < 0 || virt_addr > mem_limit);
+        if(scanf("%x", &virt_addr) != 1) continue;
+    }while(virt_addr > mem_limit);
 
-    printf("Enter string to write: ");
-    scanf("%s", write_byte);
+    do{
+        printf("Enter string to write: ");
+    }while(scanf("%s", write_byte) != 1);
 
-    for(uint32_t i = 0; write_byte[i] != '\0'; ++i){
-        char wb = write_byte[i];
-        MMU_writeByte(mmu, (uint32_t)(virt_addr + i), wb);
-    }
+    uint32_t len = (uint32_t)strlen(write_byte);
+    for(uint32_t i = 0; i < len; ++i, ++virt_addr)
+        MMU_writeByte(mmu, virt_addr, write_byte[i]);
 }
 
-void random_read_write(MMU* mmu, int mem_limit){
-    char input[256];
-    int n = -1;
+void random_read_write(MMU* mmu){
+    int input;
     do{
         printf("How many read/write: ");
-        scanf("%s", input);
-        n = atoi(input);
-    }while(n < 0);
+        if(scanf("%d", &input) != 1) continue;
+    }while(input < 0);
     printf("\n");
 
     srandom((uint32_t)time(NULL));
-    for(int i = 0; i < n; ++i){
+    for(int i = 0; i < input; ++i){
         uint32_t rw = (uint32_t)(random() & 1);
+        
+        // uint32_t page_index = (uint32_t)(random() % PAGES);
+        // uint32_t offset     = (uint32_t)(random() % PAGE_SIZE);
+        // uint32_t virt_addr  = (page_index << PAGE_OFFSET_SIZE) | offset;
+        // printf("virt_addr: 0x%x, page_index: 0x%x, offset: 0x%x\n", virt_addr, page_index, offset);
+
         uint32_t virt_addr = (uint32_t)(random() % VIRT_MEM_SIZE);
+        // printf("virt_addr: 0x%x, page_index: 0x%x, offset: 0x%x\n", virt_addr, getPageIndex(virt_addr), getOffset(virt_addr));
 
         // 0 = read, 1 = write
         if(rw == 0){
             printf("Read from address: 0x%x\n", virt_addr);
             char* c = MMU_readByte(mmu, virt_addr);
-            if(c) printf("Character read: %c\n", c[0]);
+            if(c) printf("Character read: '%c'\n", c[0]);
         }
         else{
             char k = (char)(random() % 26) + 'a';
-            printf("Write character %c on address: 0x%x\n", k, virt_addr);
+            printf("Write character '%c' on address: 0x%x\n", k, virt_addr);
             MMU_writeByte(mmu, virt_addr, k);
         }
         printf("\n");
