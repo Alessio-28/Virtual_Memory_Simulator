@@ -75,7 +75,8 @@ AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr);
 
 void PrintMMU(MMU mmu);
 void PrintPageTable(MMU mmu);
-// Printf pages in physical memory with their info and data
+// Print data in physical memory and info of pages stored in it
 void PrintPhysicalMemory(MMU mmu);
-// Printf pages in physical memory with their info
+// Print pages in the working set and their info
 void PrintWorkingSet(MMU mmu);
+void PrintPageInMemory(MMU mmu, uint32_t page_index);

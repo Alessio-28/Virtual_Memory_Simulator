@@ -18,6 +18,7 @@ int main(int argc, char** argv){
     Swap_init(SWAP_FILE);
 
     char command[256];
+    command[0] = 0;
     while(command[0] != '0' && command[0] != 'Q' && command[0] != 'q'){
         printf("\n");
         printf("Enter:\n");
@@ -25,10 +26,11 @@ int main(int argc, char** argv){
         printf("2 - Write on page\n");
         printf("3 - Print physical memory\n");
         printf("4 - Print working set\n");
-        printf("5 - Print swap file\n");
-        printf("6 - Print MMU\n");
-        printf("7 - Print macros\n");
-        printf("8 - Random read/write on pages\n");
+        printf("5 - Print a page in main memory\n");
+        printf("6 - Print swap file\n");
+        printf("7 - Print MMU\n");
+        printf("8 - Print macros\n");
+        printf("9 - Random read/write on pages\n");
         printf("0 | Q | q - Quit\n");
         do{
             printf("Command: ");
@@ -51,15 +53,18 @@ int main(int argc, char** argv){
                 PrintWorkingSet(mmu);
                 break;
             case '5':
-                print_swap();
+                print_page_in_memory(mmu);
                 break;
             case '6':
-                PrintMMU(mmu);
+                print_swap();
                 break;
             case '7':
-                print_macros();
+                PrintMMU(mmu);
                 break;
             case '8':
+                print_macros();
+                break;
+            case '9':
                 random_read_write(mmu_ptr);
                 break;
             case '0':

@@ -59,7 +59,20 @@ void print_macros(){
 
 void phys_mem_init(char* phys_mem){ memset(phys_mem, '0', PHYS_MEM_SIZE); }
 
-void print_swap(){
+void print_page_in_memory(MMU mmu){
+    uint32_t mem_limit = PAGES-1;
+    uint32_t page_index = PAGES;
+    
+    do{
+        printf("Enter index of page to print (0x0 <= address <= 0x%x): ", mem_limit);
+        if(scanf("%x", &page_index) != 1) continue;
+    }while(page_index > mem_limit);
+    
+    PrintPageInMemory(mmu, page_index);
+}
+
+void print_swap()
+{
     char input[256];
     
     do{

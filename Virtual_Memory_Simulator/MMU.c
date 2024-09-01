@@ -1,7 +1,7 @@
 #include "MMU.h"
 #include "swap.h"
 #include <stdio.h>
-#include "string.h"
+#include <string.h>
 #include <assert.h>
 
 void MMU_init(MMU* mmu, char* phys_mem){
@@ -269,8 +269,11 @@ void PrintPhysicalMemory(MMU mmu){
             if(mmu.pt[page_index].frame_index == i)
                 break;
         }
-        if(page_index != PAGES)
-            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u | ", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
+        
+        if(page_index != PAGES){
+            Page p = mmu.pt[page_index];
+            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u | ", i, page_index, p.valid, p.unswappable, p.read, p.write);
+        }
         else
             printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 | ", i);
         
@@ -287,7 +290,7 @@ void PrintPhysicalMemory(MMU mmu){
 }
 
 void PrintWorkingSet(MMU mmu){
-    printf("Physical memory data\n");
+    printf("Working set data\n");
     printf("__________________________________\n");
     printf("  Frame |   Page | V | U | R | W |\n");
     for(uint32_t i = 0; i < FRAMES; ++i){
@@ -296,10 +299,28 @@ void PrintWorkingSet(MMU mmu){
             if(mmu.pt[page_index].frame_index == i)
                 break;
         }
-        if(page_index != PAGES)
-            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", i, page_index, mmu.pt[page_index].valid, mmu.pt[page_index].unswappable, mmu.pt[page_index].read, mmu.pt[page_index].write);
-        else
-            printf(" 0x%04x |     -1 | 0 | 0 | 0 | 0 |\n", i);
+        if(page_index != PAGES){
+            Page p = mmu.pt[page_index];
+            printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", i, page_index, p.valid, p.unswappable, p.read, p.write);
+        }
     }
+    printf("__________________________________\n\n");
+}
+
+void PrintPageInMemory(MMU mmu, uint32_t page_index){
+    Page p = mmu.pt[page_index];
+    if(p.frame_index == -1){
+        printf("Page requested not in main memory");
+        return;
+    }
+
+    char buf[PAGE_SIZE+1];
+    memcpy(buf, mmu.mem_ptr+(p.frame_index*PAGE_SIZE), PAGE_SIZE);
+    buf[PAGE_SIZE] = '\0';
+
+    printf("__________________________________\n");
+    printf("   Page |  Frame | V | U | R | W |\n");
+    printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", page_index, p.frame_index, p.valid, p.unswappable, p.read, p.write);
+    printf("%s\n", buf);
     printf("__________________________________\n\n");
 }
