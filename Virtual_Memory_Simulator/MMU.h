@@ -38,12 +38,12 @@ typedef struct MMU{
 void MMU_init(MMU* mmu, char* phys_mem);
 void PageTable_init(MMU* mmu, char* phys_mem);
 
-void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c);
+void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c);
 
 // If virt_addr is not valid, return NULL
-char* MMU_readByte(MMU* mmu, uint32_t virt_addr);
+char* MMU_readByte(MMU* mmu, const uint32_t virt_addr);
 
-void MMU_exception(MMU* mmu, uint32_t virt_addr);
+void MMU_exception(MMU* mmu, const uint32_t virt_addr);
 
 // Choose the page to be overwritten
 // Set page_index to the index of the chosen page
@@ -52,31 +52,31 @@ void MMU_exception(MMU* mmu, uint32_t virt_addr);
 // Return 1 if the page has not been read but has been written
 uint8_t SecondChance(MMU* mmu, uint32_t* page_index);
 
-void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index);
+void addPage(MMU* mmu, const uint32_t page_index, const uint32_t frame_index);
 
-void removePage(MMU* mmu, uint32_t page_index);
+void removePage(MMU* mmu, const uint32_t page_index);
 
 // Translate virtual address to physical address.
 // Assume virt_addr is a valid address
-uint32_t getPhysicalAddress(MMU* mmu, uint32_t virt_addr);
+uint32_t getPhysicalAddress(const MMU* mmu, const uint32_t virt_addr);
 
 // Get page index from virtual address
-uint32_t getPageIndex(uint32_t virt_addr);
+uint32_t getPageIndex(const uint32_t virt_addr);
 
 // Get frame index from physical address
-uint32_t getFrameIndex(uint32_t phys_addr);
+uint32_t getFrameIndex(const uint32_t phys_addr);
 
 // Get page offset from either virtual or physical address
-uint32_t getOffset(uint32_t addr);
+uint32_t getOffset(const uint32_t addr);
 
-AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr);
+AddressingResult AddressIsValid(const MMU* mmu, const uint32_t virt_addr);
 
 
 
-void PrintMMU(MMU mmu);
-void PrintPageTable(MMU mmu);
+void PrintMMU(const MMU mmu);
+void PrintPageTable(const MMU mmu);
 // Print data in physical memory and info of pages stored in it
-void PrintPhysicalMemory(MMU mmu);
+void PrintPhysicalMemory(const MMU mmu);
 // Print pages in the working set and their info
-void PrintWorkingSet(MMU mmu);
-void PrintPageInMemory(MMU mmu, uint32_t page_index);
+void PrintWorkingSet(const MMU mmu);
+void PrintPageInMemory(const MMU mmu, const uint32_t page_index);

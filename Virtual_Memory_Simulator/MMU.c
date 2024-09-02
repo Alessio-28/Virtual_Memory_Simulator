@@ -19,7 +19,7 @@ void MMU_init(MMU* mmu, char* phys_mem){
 
     // Set pages used to allocate the page table and free list
     uint32_t pages_for_data_structures = 1;
-    uint32_t temp = (mmu->pt_len + (mmu->free_list.max_size * sizeof(int)));
+    const uint32_t temp = (mmu->pt_len + (mmu->free_list.max_size * sizeof(int)));
     while((pages_for_data_structures * PAGE_SIZE) < temp)
         pages_for_data_structures++;
     
@@ -50,9 +50,9 @@ void PageTable_init(MMU* mmu, char* phys_mem){
 }
 
 
-void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
+void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c){
     assert((virt_addr >= 0 || virt_addr < VIRT_MEM_SIZE) && "Virtual address must be non negative and less than VIRT_MEM_SIZE");
-    AddressingResult res = AddressIsValid(mmu, virt_addr);
+    const AddressingResult res = AddressIsValid(mmu, virt_addr);
 
     if(res == Invalid){
         printf("Invalid Address\n");
@@ -62,10 +62,10 @@ void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
     if(res == PageNotInMemory)
         MMU_exception(mmu, virt_addr);
 
-    uint32_t page_index = getPageIndex(virt_addr);
+    const uint32_t page_index = getPageIndex(virt_addr);
     mmu->pt[page_index].read  = 1;
     mmu->pt[page_index].write = 1;
-    uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
+    const uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
 
     mmu->mem_ptr[phys_addr] = c;
 
@@ -74,9 +74,9 @@ void MMU_writeByte(MMU* mmu, uint32_t virt_addr, char c){
 #endif
 }
 
-char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
+char* MMU_readByte(MMU* mmu, const uint32_t virt_addr){
     assert((virt_addr >= 0 || virt_addr < VIRT_MEM_SIZE) && "Virtual address must be non negative and less than VIRT_MEM_SIZE");
-    AddressingResult res = AddressIsValid(mmu, virt_addr);
+    const AddressingResult res = AddressIsValid(mmu, virt_addr);
 
     if(res == Invalid){
         printf("Invalid Address\n\n");
@@ -86,9 +86,9 @@ char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
     if(res == PageNotInMemory)
         MMU_exception(mmu, virt_addr);
 
-    uint32_t page_index = getPageIndex(virt_addr);
+    const uint32_t page_index = getPageIndex(virt_addr);
     mmu->pt[page_index].read = 1;
-    uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
+    const uint32_t phys_addr = getPhysicalAddress(mmu, virt_addr);
 
 #ifdef _TEST_
     printf("Character read from page 0x%x on frame 0x%x\n", page_index, getFrameIndex(phys_addr));
@@ -97,16 +97,16 @@ char* MMU_readByte(MMU* mmu, uint32_t virt_addr){
     return &(mmu->mem_ptr[phys_addr]);
 }
 
-void MMU_exception(MMU* mmu, uint32_t virt_addr){
-    uint32_t page_index_in = getPageIndex(virt_addr);
-    int free_frame = getElement(&(mmu->free_list));
+void MMU_exception(MMU* mmu, const uint32_t virt_addr){
+    const uint32_t page_index_in = getPageIndex(virt_addr);
+    const int free_frame = getElement(&(mmu->free_list));
 #ifdef _TEST_
     printf("--PAGE FAULT--\n");
 #endif
     if(free_frame == -1){
         uint32_t page_index_out;
-        uint8_t class = SecondChance(mmu, &page_index_out);
-        uint32_t frame_index = mmu->pt[page_index_out].frame_index;
+        const uint8_t class = SecondChance(mmu, &page_index_out);
+        const uint32_t frame_index = mmu->pt[page_index_out].frame_index;
         // Swap_out_and_in(SWAP_FILE, mmu->mem_ptr, frame_index, page_index_out, page_index_in);
 
         if(class == 1){
@@ -173,7 +173,7 @@ uint8_t SecondChance(MMU* mmu, uint32_t* page_index){
     }
 }
 
-void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index){
+void addPage(MMU* mmu, const uint32_t page_index, const uint32_t frame_index){
     mmu->pt[page_index].frame_index = frame_index;
     mmu->pt[page_index].unswappable = 0;
     mmu->pt[page_index].valid = 1;
@@ -181,7 +181,7 @@ void addPage(MMU* mmu, uint32_t page_index, uint32_t frame_index){
     mmu->pt[page_index].write = 0;
 }
 
-void removePage(MMU* mmu, uint32_t page_index){
+void removePage(MMU* mmu, const uint32_t page_index){
     mmu->pt[page_index].frame_index = 0;
     mmu->pt[page_index].unswappable = 0;
     mmu->pt[page_index].valid = 0;
@@ -189,7 +189,7 @@ void removePage(MMU* mmu, uint32_t page_index){
     mmu->pt[page_index].write = 0;
 }
 
-uint32_t getPhysicalAddress(MMU* mmu, uint32_t virt_addr){
+uint32_t getPhysicalAddress(const MMU* mmu, const uint32_t virt_addr){
     uint32_t page_offset = getOffset(virt_addr);
     uint32_t page_index = getPageIndex(virt_addr);
 
@@ -199,16 +199,16 @@ uint32_t getPhysicalAddress(MMU* mmu, uint32_t virt_addr){
     return phys_addr;
 }
 
-uint32_t getPageIndex(uint32_t virt_addr){ return virt_addr >> PAGE_OFFSET_SIZE; }
+uint32_t getPageIndex(const uint32_t virt_addr){ return virt_addr >> PAGE_OFFSET_SIZE; }
 
-uint32_t getFrameIndex(uint32_t phys_addr){ return phys_addr >> PAGE_OFFSET_SIZE; }
+uint32_t getFrameIndex(const uint32_t phys_addr){ return phys_addr >> PAGE_OFFSET_SIZE; }
 
-uint32_t getOffset(uint32_t addr){
+uint32_t getOffset(const uint32_t addr){
     uint32_t mask = (1 << PAGE_OFFSET_SIZE) - 1;
     return addr & mask;
 }
 
-AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr){
+AddressingResult AddressIsValid(const MMU* mmu, const uint32_t virt_addr){
     uint32_t page_index = getPageIndex(virt_addr);
 
     if(mmu->pt[page_index].unswappable) return Invalid;
@@ -220,9 +220,9 @@ AddressingResult AddressIsValid(MMU* mmu, uint32_t virt_addr){
 //_______________________________________________________________________________________________________________________________
 //_______________________________________________________________________________________________________________________________
 
-void PrintMMU(MMU mmu){
+void PrintMMU(const MMU mmu){
     uint32_t pages_for_data_structures = 1;
-    uint32_t temp = (mmu.pt_len + (mmu.free_list.max_size * sizeof(int)));
+    const uint32_t temp = (mmu.pt_len + (mmu.free_list.max_size * sizeof(int)));
     while((pages_for_data_structures * PAGE_SIZE) < temp)
         pages_for_data_structures++;
     
@@ -248,18 +248,20 @@ void PrintMMU(MMU mmu){
     printf("______________________________\n\n");
 }
 
-void PrintPageTable(MMU mmu){
+void PrintPageTable(const MMU mmu){
+    int frame_index = -1;
+
     printf("Page table content\n");
     printf("__________________________________\n");
     printf("  Page |   Frame | V | U | R | W\n");
     for(uint32_t i = 0; i < PAGES; ++i){
-        int frame_index = mmu.pt[i].valid ? mmu.pt[i].frame_index : -1;
+        frame_index = mmu.pt[i].valid ? mmu.pt[i].frame_index : -1;
         printf("0x%4x |  0x%4x | %1u | %1u | %1u | %1u\n", i, frame_index, mmu.pt[i].valid, mmu.pt[i].unswappable, mmu.pt[i].read, mmu.pt[i].write);
     }
     printf("__________________________________\n\n");
 }
 
-void PrintPhysicalMemory(MMU mmu){
+void PrintPhysicalMemory(const MMU mmu){
     printf("Physical memory data\n");
     printf("_______________________________________\n");
     printf("  Frame |   Page | V | U | R | W | Data\n");
@@ -289,7 +291,7 @@ void PrintPhysicalMemory(MMU mmu){
     printf("_______________________________________\n\n");
 }
 
-void PrintWorkingSet(MMU mmu){
+void PrintWorkingSet(const MMU mmu){
     printf("Working set data\n");
     printf("__________________________________\n");
     printf("  Frame |   Page | V | U | R | W |\n");
@@ -307,9 +309,9 @@ void PrintWorkingSet(MMU mmu){
     printf("__________________________________\n\n");
 }
 
-void PrintPageInMemory(MMU mmu, uint32_t page_index){
-    Page p = mmu.pt[page_index];
-    if(p.frame_index == -1){
+void PrintPageInMemory(const MMU mmu, const uint32_t page_index){
+    const Page p = mmu.pt[page_index];
+    if(p.valid){
         printf("Page requested not in main memory");
         return;
     }

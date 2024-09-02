@@ -5,7 +5,7 @@
 #include <assert.h>
 #include <string.h>
 
-void Swap_init(char* swap_file_name){
+void Swap_init(const char* swap_file_name){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     FILE* f = fopen(swap_file_name, "w");
     assert(f && "Swap file open failed");
@@ -26,9 +26,9 @@ void Swap_init(char* swap_file_name){
     fclose(f);
 }
 
-void Swap_unlink(char* swap_file_name){ unlink(swap_file_name); }
+void Swap_unlink(const char* swap_file_name){ unlink(swap_file_name); }
 
-void Swap_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index){
+void Swap_in(const char* swap_file_name, char* phys_mem, const uint32_t frame_index, const uint32_t page_index){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     assert(phys_mem && "Physical memory pointer must not be NULL");
     assert((frame_index < FRAMES) && "Frame index must be less than FRAMES");
@@ -38,7 +38,7 @@ void Swap_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_
 
     char buf[PAGE_SIZE+1];
     fseek(f, page_index*PAGE_SIZE, SEEK_SET);
-    char* ret = fgets(buf, PAGE_SIZE+1, f);
+    const char* ret = fgets(buf, PAGE_SIZE+1, f);
 
     fclose(f);
 
@@ -47,7 +47,7 @@ void Swap_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_
     memcpy(phys_mem+(frame_index*PAGE_SIZE), buf, PAGE_SIZE);
 }
 
-void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index){
+void Swap_out(const char* swap_file_name, char* phys_mem, const uint32_t frame_index, const uint32_t page_index){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     assert(phys_mem && "Physical memory pointer must not be NULL");
     assert((frame_index < FRAMES) && "Frame index must be less than FRAMES");
@@ -60,7 +60,7 @@ void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32
     memcpy(buf, phys_mem+(frame_index*PAGE_SIZE), PAGE_SIZE);
     buf[PAGE_SIZE] = '\0';
 
-    int res_out = fprintf(f, "%s", buf);
+    const int res_out = fprintf(f, "%s", buf);
     
     fclose(f);
     
@@ -70,7 +70,7 @@ void Swap_out(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32
     }
 }
 
-void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index, uint32_t page_index_out, uint32_t page_index_in){
+void Swap_out_and_in(const char* swap_file_name, char* phys_mem, const uint32_t frame_index, const uint32_t page_index_out, const uint32_t page_index_in){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     assert(phys_mem && "Physical memory pointer must not be NULL");
     assert((frame_index < FRAMES) && "Frame index must be less than FRAMES");
@@ -84,7 +84,7 @@ void Swap_out_and_in(char* swap_file_name, char* phys_mem, uint32_t frame_index,
 //_______________________________________________________________________________________________________________________________
 //_______________________________________________________________________________________________________________________________
 
-void PrintSwap(char* swap_file_name){
+void PrintSwap(const char* swap_file_name){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     FILE* f = fopen(swap_file_name, "r");
     assert(f && "Swap file open failed");
@@ -104,7 +104,7 @@ void PrintSwap(char* swap_file_name){
     fclose(f);
 }
 
-void PrintPageInSwap(char* swap_file_name, uint32_t page_index){
+void PrintPageInSwap(const char* swap_file_name, const uint32_t page_index){
     assert(swap_file_name && "Swap_file_name must not be NULL");
     assert((page_index < PAGES) && "page_index must be less than PAGES");
     FILE* f = fopen(swap_file_name, "r");
@@ -112,7 +112,7 @@ void PrintPageInSwap(char* swap_file_name, uint32_t page_index){
 
     char buf[PAGE_SIZE+1];
     fseek(f, page_index*PAGE_SIZE, SEEK_SET);
-    char* res = fgets(buf, PAGE_SIZE+1, f);
+    const char* res = fgets(buf, PAGE_SIZE+1, f);
 
     fclose(f);
 

@@ -6,7 +6,7 @@
 
 char phys_mem[PHYS_MEM_SIZE];
 
-int main(int argc, char** argv){
+int main(){
     check_macros();
     print_macros();
 

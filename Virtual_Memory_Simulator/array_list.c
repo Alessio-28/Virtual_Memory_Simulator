@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void ArrayList_init(ArrayList* array_list, int size){
+void ArrayList_init(ArrayList* array_list, const int size){
     assert(array_list->list && "Array list pointer must not be NULL");
 
     array_list->start = 0;
@@ -17,7 +17,7 @@ void ArrayList_init(ArrayList* array_list, int size){
     
 }
 
-void EmptyArrayList_init(ArrayList* array_list, int size){
+void EmptyArrayList_init(ArrayList* array_list, const int size){
     assert(array_list->list && "Array list pointer must not be NULL");
     
     array_list->start = -1;
@@ -31,7 +31,7 @@ void EmptyArrayList_init(ArrayList* array_list, int size){
 int getElement(ArrayList* array_list){
     if(array_list->size == 0) return -1;
 
-    int elem = array_list->start;
+    const int elem = array_list->start;
     array_list->start = array_list->list[elem];
     array_list->list[elem] = -1;
     (array_list->size)--;
@@ -39,7 +39,7 @@ int getElement(ArrayList* array_list){
     return elem;
 }
 
-void addElement(ArrayList* array_list, int elem){
+void addElement(ArrayList* array_list, const int elem){
     assert((elem >= 0) && "Array list: element must be non negative");
     assert((elem < array_list->max_size) && "Array list: element must be less than max size");
     assert((array_list->size < array_list->max_size) && "Array list full");
@@ -50,7 +50,7 @@ void addElement(ArrayList* array_list, int elem){
     (array_list->size)++;
 }
 
-void PrintArrayList(ArrayList array_list){
+void PrintArrayList(const ArrayList array_list){
     printf("Array list max size _ %d\n", array_list.max_size);
     printf("Array list size _____ %d\n", array_list.size);
     printf("Array list start ____ %d\n", array_list.start);

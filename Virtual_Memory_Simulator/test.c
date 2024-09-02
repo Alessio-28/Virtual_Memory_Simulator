@@ -36,14 +36,14 @@ void check_macros(){
 }
 
 void print_macros(){
-    uint32_t virt_mem_size_bit = VIRT_MEM_SIZE_BIT;
-    uint32_t phys_mem_size_bit = PHYS_MEM_SIZE_BIT;
-    uint32_t page_size_bit = PAGE_SIZE_BIT;
-    uint32_t virt_mem_size = VIRT_MEM_SIZE;
-    uint32_t phys_mem_size = PHYS_MEM_SIZE;
-    uint32_t page_size = PAGE_SIZE;
-    uint32_t pages = PAGES;
-    uint32_t frames = FRAMES;
+    const uint32_t virt_mem_size_bit = VIRT_MEM_SIZE_BIT;
+    const uint32_t phys_mem_size_bit = PHYS_MEM_SIZE_BIT;
+    const uint32_t page_size_bit = PAGE_SIZE_BIT;
+    const uint32_t virt_mem_size = VIRT_MEM_SIZE;
+    const uint32_t phys_mem_size = PHYS_MEM_SIZE;
+    const uint32_t page_size = PAGE_SIZE;
+    const uint32_t pages = PAGES;
+    const uint32_t frames = FRAMES;
 
     printf("______________________________________\n");
     printf("Virtual address size __ %u bits\n", virt_mem_size_bit);
@@ -59,8 +59,8 @@ void print_macros(){
 
 void phys_mem_init(char* phys_mem){ memset(phys_mem, '0', PHYS_MEM_SIZE); }
 
-void print_page_in_memory(MMU mmu){
-    uint32_t mem_limit = PAGES-1;
+void print_page_in_memory(const MMU mmu){
+    const uint32_t mem_limit = PAGES-1;
     uint32_t page_index = PAGES;
     
     do{
@@ -71,8 +71,7 @@ void print_page_in_memory(MMU mmu){
     PrintPageInMemory(mmu, page_index);
 }
 
-void print_swap()
-{
+void print_swap(){
     char input[256];
     
     do{
@@ -83,7 +82,7 @@ void print_swap()
     if(input[0] == 'y')
         PrintSwap(SWAP_FILE);
     else{
-        uint32_t page_index_limit = PAGES-1;
+        const uint32_t page_index_limit = PAGES-1;
         uint32_t page_index = PAGES;
         do{
             printf("Enter index of page to print (0x0 <= index <= 0x%x): ", page_index_limit);
@@ -94,21 +93,20 @@ void print_swap()
 }
 
 void read_from_page(MMU* mmu){
-    uint32_t mem_limit = VIRT_MEM_SIZE-1;
+    const uint32_t mem_limit = VIRT_MEM_SIZE-1;
     uint32_t virt_addr = VIRT_MEM_SIZE;
-    char* read_byte;
     
     do{
         printf("Enter address from which to read (0x0 <= address <= 0x%x): ", mem_limit);
         if(scanf("%x", &virt_addr) != 1) continue;
     }while(virt_addr > mem_limit);
 
-    read_byte = MMU_readByte(mmu, virt_addr);
+    const char* read_byte = MMU_readByte(mmu, virt_addr);
     if(read_byte) printf("Character read: '%c'\n", read_byte[0]);
 }
 
 void write_on_page(MMU* mmu){
-    uint32_t mem_limit = VIRT_MEM_SIZE-1;
+    const uint32_t mem_limit = VIRT_MEM_SIZE-1;
     uint32_t virt_addr = VIRT_MEM_SIZE;
     char write_byte[256];
 
@@ -121,7 +119,7 @@ void write_on_page(MMU* mmu){
         printf("Enter string to write: ");
     }while(scanf("%s", write_byte) != 1);
 
-    uint32_t len = (uint32_t)strlen(write_byte);
+    const uint32_t len = (uint32_t)strlen(write_byte);
     for(uint32_t i = 0; i < len; ++i, ++virt_addr)
         MMU_writeByte(mmu, virt_addr, write_byte[i]);
 }

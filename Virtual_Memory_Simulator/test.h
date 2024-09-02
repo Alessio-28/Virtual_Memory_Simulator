@@ -8,7 +8,7 @@ void check_macros();
 void print_macros();
 void phys_mem_init(char* phys_mem);
 
-void print_page_in_memory(MMU mmu);
+void print_page_in_memory(const MMU mmu);
 void print_swap();
 
 void read_from_page(MMU* mmu);
