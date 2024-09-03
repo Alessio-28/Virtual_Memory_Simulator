@@ -74,14 +74,12 @@ void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c){
 #endif
 }
 
-char* MMU_readByte(MMU* mmu, const uint32_t virt_addr){
+const char* MMU_readByte(MMU* mmu, const uint32_t virt_addr){
     assert((virt_addr >= 0 || virt_addr < VIRT_MEM_SIZE) && "Virtual address must be non negative and less than VIRT_MEM_SIZE");
     const AddressingResult res = AddressIsValid(mmu, virt_addr);
 
-    if(res == Invalid){
-        printf("Invalid Address\n\n");
+    if(res == Invalid)
         return NULL;
-    }
 
     if(res == PageNotInMemory)
         MMU_exception(mmu, virt_addr);

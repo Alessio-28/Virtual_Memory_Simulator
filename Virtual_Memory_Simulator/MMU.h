@@ -41,7 +41,7 @@ void PageTable_init(MMU* mmu, char* phys_mem);
 void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c);
 
 // If virt_addr is not valid, return NULL
-char* MMU_readByte(MMU* mmu, const uint32_t virt_addr);
+const char* MMU_readByte(MMU* mmu, const uint32_t virt_addr);
 
 void MMU_exception(MMU* mmu, const uint32_t virt_addr);
 

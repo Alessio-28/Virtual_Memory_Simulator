@@ -102,7 +102,10 @@ void read_from_page(MMU* mmu){
     }while(virt_addr > mem_limit);
 
     const char* read_byte = MMU_readByte(mmu, virt_addr);
-    if(read_byte) printf("Character read: '%c'\n", read_byte[0]);
+    if(read_byte)
+        printf("Character read: '%c'\n", read_byte[0]);
+    else
+        printf("Invalid Address\n");
 }
 
 void write_on_page(MMU* mmu){
@@ -135,11 +138,6 @@ void random_read_write(MMU* mmu){
     srandom((uint32_t)time(NULL));
     for(int i = 0; i < input; ++i){
         uint32_t rw = (uint32_t)(random() & 1);
-        
-        // uint32_t page_index = (uint32_t)(random() % PAGES);
-        // uint32_t offset     = (uint32_t)(random() % PAGE_SIZE);
-        // uint32_t virt_addr  = (page_index << PAGE_OFFSET_SIZE) | offset;
-        // printf("virt_addr: 0x%x, page_index: 0x%x, offset: 0x%x\n", virt_addr, page_index, offset);
 
         uint32_t virt_addr = (uint32_t)(random() % VIRT_MEM_SIZE);
         // printf("virt_addr: 0x%x, page_index: 0x%x, offset: 0x%x\n", virt_addr, getPageIndex(virt_addr), getOffset(virt_addr));
@@ -147,13 +145,16 @@ void random_read_write(MMU* mmu){
         // 0 = read, 1 = write
         if(rw == 0){
             printf("Read from address: 0x%x\n", virt_addr);
-            char* c = MMU_readByte(mmu, virt_addr);
-            if(c) printf("Character read: '%c'\n", c[0]);
+            const char* read_byte = MMU_readByte(mmu, virt_addr);
+            if(read_byte)
+                printf("Character read: '%c'\n", read_byte[0]);
+            else
+                printf("Invalid Address\n");
         }
         else{
-            char k = (char)(random() % 26) + 'a';
-            printf("Write character '%c' on address: 0x%x\n", k, virt_addr);
-            MMU_writeByte(mmu, virt_addr, k);
+            char write_byte = (char)(random() % 26) + 'a';
+            printf("Write character '%c' on address: 0x%x\n", write_byte, virt_addr);
+            MMU_writeByte(mmu, virt_addr, write_byte);
         }
         printf("\n");
     }
