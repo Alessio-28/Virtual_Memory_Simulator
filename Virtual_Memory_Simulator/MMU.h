@@ -34,11 +34,12 @@ typedef struct MMU{
     ArrayList free_list;
 } MMU;
 
+// Make MMU_writeByte and PrintPageInMemory return int
 
 void MMU_init(MMU* mmu, char* phys_mem);
 void PageTable_init(MMU* mmu, char* phys_mem);
 
-void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c);
+int MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c);
 
 // If virt_addr is not valid, return NULL
 const char* MMU_readByte(MMU* mmu, const uint32_t virt_addr);

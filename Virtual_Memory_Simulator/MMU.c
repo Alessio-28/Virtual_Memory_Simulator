@@ -50,14 +50,12 @@ void PageTable_init(MMU* mmu, char* phys_mem){
 }
 
 
-void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c){
+int MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c){
     assert((virt_addr >= 0 || virt_addr < VIRT_MEM_SIZE) && "Virtual address must be non negative and less than VIRT_MEM_SIZE");
     const AddressingResult res = AddressIsValid(mmu, virt_addr);
 
-    if(res == Invalid){
-        printf("Invalid Address\n");
-        return;
-    }
+    if(res == Invalid)
+        return -1;
 
     if(res == PageNotInMemory)
         MMU_exception(mmu, virt_addr);
@@ -72,6 +70,8 @@ void MMU_writeByte(MMU* mmu, const uint32_t virt_addr, const char c){
 #ifdef _TEST_
     printf("Character written on page 0x%x on frame 0x%x\n", page_index, getFrameIndex(phys_addr));
 #endif
+
+    return 0;
 }
 
 const char* MMU_readByte(MMU* mmu, const uint32_t virt_addr){
@@ -225,15 +225,25 @@ void PrintMMU(const MMU mmu){
         pages_for_data_structures++;
     
     // Page table address relative to phys_mem
-    printf("MMU data\n");
-    printf("______________________________\n");
-    printf("Page table address ________ 0x%lx\n", (((void*)mmu.pt) - ((void*)mmu.mem_ptr)));
-    printf("Page table length _________ %u bytes\n", mmu.pt_len);
-    printf("Pages for data structures _ %u\n", pages_for_data_structures);
-    printf("Circular list index _______ 0x%x\n", mmu.cricular_list_index);
     // Free list address relative to phys_mem
-    printf("Free list address _________ 0x%lx\n", (((void*)mmu.free_list.list) - ((void*)mmu.mem_ptr)));
-    printf("Free frames _______________ %d\n", mmu.free_list.size);
+    const char* str = "MMU data\n"
+                      "______________________________\n"
+                      "Page table address ________ 0x%lx\n"
+                      "Page table length _________ %u bytes\n"
+                      "Pages for data structures _ %u\n"
+                      "Circular list index _______ 0x%x\n"
+                      "Free list address _________ 0x%lx\n"
+                      "Free frames _______________ %d\n";
+
+    printf(str,
+            (((void*)mmu.pt) - ((void*)mmu.mem_ptr)),
+            mmu.pt_len,
+            pages_for_data_structures,
+            mmu.cricular_list_index,
+            (((void*)mmu.free_list.list) - ((void*)mmu.mem_ptr)),
+            mmu.free_list.size
+          );
+           
     if(mmu.free_list.start != -1){
         printf("\nFree frames index: 0x%x", mmu.free_list.start);
         for(uint32_t i = 0; i < mmu.free_list.max_size; ++i){
@@ -248,10 +258,11 @@ void PrintMMU(const MMU mmu){
 
 void PrintPageTable(const MMU mmu){
     int frame_index = -1;
-
-    printf("Page table content\n");
-    printf("__________________________________\n");
-    printf("  Page |   Frame | V | U | R | W\n");
+    const char* str = "Page table content\n"
+                      "__________________________________\n"
+                      "  Page |   Frame | V | U | R | W\n";
+    
+    printf(str);
     for(uint32_t i = 0; i < PAGES; ++i){
         frame_index = mmu.pt[i].valid ? mmu.pt[i].frame_index : -1;
         printf("0x%4x |  0x%4x | %1u | %1u | %1u | %1u\n", i, frame_index, mmu.pt[i].valid, mmu.pt[i].unswappable, mmu.pt[i].read, mmu.pt[i].write);
@@ -260,9 +271,10 @@ void PrintPageTable(const MMU mmu){
 }
 
 void PrintPhysicalMemory(const MMU mmu){
-    printf("Physical memory data\n");
-    printf("_______________________________________\n");
-    printf("  Frame |   Page | V | U | R | W | Data\n");
+    const char* str = "Physical memory data\n"
+                      "_______________________________________\n"
+                      "  Frame |   Page | V | U | R | W | Data\n";
+    printf(str);
     for(uint32_t i = 0; i < FRAMES; ++i){
         int page_index = 0;
         for(; page_index < PAGES; ++page_index){
@@ -290,9 +302,10 @@ void PrintPhysicalMemory(const MMU mmu){
 }
 
 void PrintWorkingSet(const MMU mmu){
-    printf("Working set data\n");
-    printf("__________________________________\n");
-    printf("  Frame |   Page | V | U | R | W |\n");
+    const char* str = "Working set data\n"
+                      "__________________________________\n"
+                      "  Frame |   Page | V | U | R | W |\n";
+    printf(str);
     for(uint32_t i = 0; i < FRAMES; ++i){
         int page_index = 0;
         for(; page_index < PAGES; ++page_index){
@@ -310,7 +323,7 @@ void PrintWorkingSet(const MMU mmu){
 void PrintPageInMemory(const MMU mmu, const uint32_t page_index){
     const Page p = mmu.pt[page_index];
     if(p.valid){
-        printf("Page requested not in main memory");
+        printf("Page requested not in main memory\n");
         return;
     }
 
@@ -318,9 +331,11 @@ void PrintPageInMemory(const MMU mmu, const uint32_t page_index){
     memcpy(buf, mmu.mem_ptr+(p.frame_index*PAGE_SIZE), PAGE_SIZE);
     buf[PAGE_SIZE] = '\0';
 
-    printf("__________________________________\n");
-    printf("   Page |  Frame | V | U | R | W |\n");
-    printf(" 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n", page_index, p.frame_index, p.valid, p.unswappable, p.read, p.write);
-    printf("%s\n", buf);
-    printf("__________________________________\n\n");
+    const char* str = "__________________________________\n"
+                      "   Page |  Frame | V | U | R | W |\n"
+                      " 0x%04x | 0x%04x | %1u | %1u | %1u | %1u |\n"
+                      "%s\n"
+                      "__________________________________\n\n";
+
+    printf(str, page_index, p.frame_index, p.valid, p.unswappable, p.read, p.write, buf);
 }

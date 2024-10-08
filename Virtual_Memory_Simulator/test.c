@@ -45,16 +45,18 @@ void print_macros(){
     const uint32_t pages = PAGES;
     const uint32_t frames = FRAMES;
 
-    printf("______________________________________\n");
-    printf("Virtual address size __ %u bits\n", virt_mem_size_bit);
-    printf("Physical address size _ %u bits\n", phys_mem_size_bit);
-    printf("Page offset size ______ %u bits\n", page_size_bit);
-    printf("Virtual memory size ___ %u bytes\n", virt_mem_size);
-    printf("Physical memory size __ %u bytes\n", phys_mem_size);
-    printf("Page size _____________ %u bytes\n", page_size);
-    printf("Pages _________________ %u\n", pages);
-    printf("Frames ________________ %u\n", frames);
-    printf("______________________________________\n\n");
+    const char* str = "______________________________________\n"
+                      "Virtual address size __ %u bits\n"
+                      "Physical address size _ %u bits\n"
+                      "Page offset size ______ %u bits\n"
+                      "Virtual memory size ___ %u bytes\n"
+                      "Physical memory size __ %u bytes\n"
+                      "Page size _____________ %u bytes\n"
+                      "Pages _________________ %u\n"
+                      "Frames ________________ %u\n"
+                      "______________________________________\n\n";
+    
+    printf(str, virt_mem_size_bit, phys_mem_size_bit, page_size_bit, virt_mem_size, phys_mem_size, page_size, pages, frames);
 }
 
 void phys_mem_init(char* phys_mem){ memset(phys_mem, '0', PHYS_MEM_SIZE); }
@@ -123,8 +125,10 @@ void write_on_page(MMU* mmu){
     }while(scanf("%s", write_byte) != 1);
 
     const uint32_t len = (uint32_t)strlen(write_byte);
-    for(uint32_t i = 0; i < len; ++i, ++virt_addr)
-        MMU_writeByte(mmu, virt_addr, write_byte[i]);
+    for(uint32_t i = 0; i < len; ++i, ++virt_addr){
+        if(MMU_writeByte(mmu, virt_addr, write_byte[i]) == -1)
+            printf("invalid Address");
+    }
 }
 
 void random_read_write(MMU* mmu){
@@ -154,7 +158,8 @@ void random_read_write(MMU* mmu){
         else{
             char write_byte = (char)(random() % 26) + 'a';
             printf("Write character '%c' on address: 0x%x\n", write_byte, virt_addr);
-            MMU_writeByte(mmu, virt_addr, write_byte);
+            if(MMU_writeByte(mmu, virt_addr, write_byte) == -1)
+                printf("Invalid Address");
         }
         printf("\n");
     }

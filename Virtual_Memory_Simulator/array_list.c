@@ -51,10 +51,11 @@ void addElement(ArrayList* array_list, const int elem){
 }
 
 void PrintArrayList(const ArrayList array_list){
-    printf("Array list max size _ %d\n", array_list.max_size);
-    printf("Array list size _____ %d\n", array_list.size);
-    printf("Array list start ____ %d\n", array_list.start);
-    printf("Array list:");
+    const char* str = "Array list max size _ %d\n"
+                      "Array list size _____ %d\n"
+                      "Array list start ____ %d\n"
+                      "Array list:";
+    printf(str, array_list.max_size, array_list.size, array_list.start);
     for(int i = 0; i < array_list.max_size; ++i)
         printf(" %d", array_list.list[i]);
     printf("\n");
